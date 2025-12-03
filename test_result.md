@@ -107,39 +107,48 @@ user_problem_statement: "Bina yönetim sistemi mobil uygulaması - Giriş ekran�
 backend:
   - task: "Kullanıcı giriş API'si (POST /api/auth/login)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Basit giriş sistemi oluşturuldu. Telefon numarası ile giriş yapılıyor. Kullanıcı yoksa otomatik olarak demo kullanıcı, bina ve daire oluşturuluyor. SMS doğrulama sonra eklenecek."
+      - working: true
+        agent: "testing"
+        comment: "✅ Tüm giriş senaryoları başarıyla test edildi: Yeni kiracı (5551234567), yeni mülk sahibi (5559876543), ve mevcut kullanıcı girişi. API doğru response döndürüyor, MongoDB'de user/building/apartment kayıtları oluşturuluyor. Demo bina 'Örnek Sitesi' otomatik oluşturuldu."
   
   - task: "Bina listeleme API'si (GET /api/buildings)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Tüm binaları listeleyen endpoint hazırlandı."
+      - working: true
+        agent: "testing"
+        comment: "✅ Bina listeleme API'si çalışıyor. 1 bina ('Örnek Sitesi') başarıyla listelendi. Response formatı doğru: _id, name, address, apartment_count alanları mevcut."
   
   - task: "Kullanıcı bilgisi getirme API'si (GET /api/users/{user_id})"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Kullanıcı detaylarını getiren endpoint hazırlandı."
+      - working: true
+        agent: "testing"
+        comment: "✅ Kullanıcı detay API'si çalışıyor. Test kullanıcısının bilgileri doğru şekilde getiriliyor. Tüm gerekli alanlar (phone_number, role, building_id, apartment_id) mevcut."
 
 frontend:
   - task: "Giriş ekranı (Login Screen)"
