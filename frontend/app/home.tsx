@@ -608,12 +608,12 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
   },
   statusIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   statusActive: {
     backgroundColor: '#d1fae5',
