@@ -566,6 +566,146 @@ async def get_unread_announcements_count(user_id: str, building_id: str):
         logging.error(f"Okunmamış duyuru sayısı hatası: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# REQUESTS (TALEP & ŞİKAYET) ENDPOINTS
+@api_router.get("/users/{user_id}/requests")
+async def get_user_requests(user_id: str):
+    """Kullanıcının tüm taleplerinı getir"""
+    try:
+        requests = await db.requests.find({"user_id": user_id}).sort("created_at", -1).to_list(100)
+        
+        if not requests:
+            # Demo talepler oluştur
+            demo_requests = [
+                {
+                    "user_id": user_id,
+                    "category": "maintenance",
+                    "title": "Asansör Arızası",
+                    "description": "A Blok asansörü çalışmıyor. Lütfen en kısa sürede bakımını yapın.",
+                    "status": "in_progress",
+                    "priority": "high",
+                    "images": [],
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                },
+                {
+                    "user_id": user_id,
+                    "category": "cleaning",
+                    "title": "Merdiven Temizliği",
+                    "description": "5. kattaki merdiven boşluğu temizlenmeye ihtiyacı var.",
+                    "status": "resolved",
+                    "priority": "low",
+                    "images": [],
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                    "resolved_at": datetime.utcnow()
+                },
+                {
+                    "user_id": user_id,
+                    "category": "security",
+                    "title": "Güvenlik Kamerası Sorunu",
+                    "description": "Giriş kapısındaki güvenlik kamerası çalışmıyor.",
+                    "status": "received",
+                    "priority": "normal",
+                    "images": [],
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+            ]
+            
+            for request in demo_requests:
+                result = await db.requests.insert_one(request)
+                request["_id"] = str(result.inserted_id)
+            
+            requests = demo_requests
+        
+        # ObjectId'leri stringe çevir
+        for request in requests:
+            if request.get("_id"):
+                request["_id"] = str(request["_id"])
+        
+        return requests
+        
+    except Exception as e:
+        logging.error(f"Talep getirme hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/requests")
+async def create_request(request_data: dict):
+    """Yeni talep oluştur"""
+    try:
+        new_request = {
+            "user_id": request_data.get("user_id"),
+            "category": request_data.get("category"),
+            "title": request_data.get("title"),
+            "description": request_data.get("description"),
+            "status": "received",
+            "priority": request_data.get("priority", "normal"),
+            "images": request_data.get("images", []),
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        
+        result = await db.requests.insert_one(new_request)
+        new_request["_id"] = str(result.inserted_id)
+        
+        return {
+            "success": True,
+            "message": "Talebiniz başarıyla oluşturuldu",
+            "request": new_request
+        }
+        
+    except Exception as e:
+        logging.error(f"Talep oluşturma hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/requests/{request_id}")
+async def get_request_detail(request_id: str):
+    """Talep detayını getir"""
+    try:
+        request = await db.requests.find_one({"_id": ObjectId(request_id)})
+        
+        if not request:
+            raise HTTPException(status_code=404, detail="Talep bulunamadı")
+        
+        request["_id"] = str(request["_id"])
+        return request
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Talep detay hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.put("/requests/{request_id}/status")
+async def update_request_status(request_id: str, status_data: dict):
+    """Talep durumunu güncelle (Admin için)"""
+    try:
+        new_status = status_data.get("status")
+        
+        update_data = {
+            "status": new_status,
+            "updated_at": datetime.utcnow()
+        }
+        
+        if new_status == "resolved":
+            update_data["resolved_at"] = datetime.utcnow()
+        
+        await db.requests.update_one(
+            {"_id": ObjectId(request_id)},
+            {"$set": update_data}
+        )
+        
+        # Güncellenmiş talebi getir
+        updated_request = await db.requests.find_one({"_id": ObjectId(request_id)})
+        if updated_request.get("_id"):
+            updated_request["_id"] = str(updated_request["_id"])
+        
+        return updated_request
+        
+    except Exception as e:
+        logging.error(f"Talep durum güncelleme hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Include the router in the main app
 app.include_router(api_router)
 
