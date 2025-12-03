@@ -355,6 +355,8 @@ export default function HomeScreen() {
                   router.push('/announcements');
                 } else if (item.route === '/requests') {
                   router.push('/requests');
+                } else if (item.route === '/legal') {
+                  router.push('/legal');
                 } else {
                   console.log(`Navigating to ${item.route}`);
                 }
