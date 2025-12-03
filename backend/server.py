@@ -209,6 +209,90 @@ async def get_user(user_id: str):
         return user
     raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
+# BUILDING STATUS ENDPOINTS
+@api_router.get("/buildings/{building_id}/status")
+async def get_building_status(building_id: str):
+    """Bina özelliklerinin durumunu getir"""
+    try:
+        # Bina özellik durumunu kontrol et
+        status = await db.building_status.find_one({"building_id": building_id})
+        
+        if not status:
+            # Eğer kayıt yoksa, varsayılan durum oluştur
+            default_status = {
+                "building_id": building_id,
+                "wifi": {
+                    "status": "active",  # active, inactive, maintenance
+                    "last_updated": datetime.utcnow()
+                },
+                "elevator": {
+                    "status": "inactive",
+                    "last_updated": datetime.utcnow()
+                },
+                "electricity": {
+                    "status": "active",
+                    "last_updated": datetime.utcnow()
+                },
+                "water": {
+                    "status": "active",
+                    "last_updated": datetime.utcnow()
+                },
+                "cleaning": {
+                    "status": "active",
+                    "last_updated": datetime.utcnow()
+                },
+                "created_at": datetime.utcnow()
+            }
+            
+            await db.building_status.insert_one(default_status)
+            status = default_status
+        
+        # ObjectId'leri stringe çevir
+        if status.get("_id"):
+            status["_id"] = str(status["_id"])
+        
+        return status
+        
+    except Exception as e:
+        logging.error(f"Bina durumu getirme hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.put("/buildings/{building_id}/status")
+async def update_building_status(building_id: str, status_update: dict):
+    """Bina özellik durumunu güncelle (Admin için)"""
+    try:
+        # Mevcut durumu getir
+        current_status = await db.building_status.find_one({"building_id": building_id})
+        
+        if not current_status:
+            raise HTTPException(status_code=404, detail="Bina durumu bulunamadı")
+        
+        # Güncelleme yap
+        update_data = {}
+        for key, value in status_update.items():
+            if key in ["wifi", "elevator", "electricity", "water", "cleaning"]:
+                update_data[f"{key}.status"] = value
+                update_data[f"{key}.last_updated"] = datetime.utcnow()
+        
+        if update_data:
+            await db.building_status.update_one(
+                {"building_id": building_id},
+                {"$set": update_data}
+            )
+        
+        # Güncellenmiş durumu getir
+        updated_status = await db.building_status.find_one({"building_id": building_id})
+        if updated_status.get("_id"):
+            updated_status["_id"] = str(updated_status["_id"])
+        
+        return updated_status
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Bina durumu güncelleme hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Include the router in the main app
 app.include_router(api_router)
 
