@@ -266,6 +266,162 @@ class BackendTester:
         except Exception as e:
             self.log_test(test_name, False, f"Error: {str(e)}")
             return None
+
+    def test_get_building_status(self, building_id):
+        """Test 6: Bina durumu getirme (YENİ ÖZELLİK - ÖNCELİK: Yüksek)"""
+        test_name = "GET /api/buildings/{building_id}/status - Bina Durumu"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/buildings/{building_id}/status", timeout=30)
+            
+            if response.status_code != 200:
+                self.log_test(test_name, False, f"HTTP {response.status_code}", {"response": response.text})
+                return None
+                
+            status = response.json()
+            
+            # Verify required fields exist
+            required_fields = ["wifi", "elevator", "electricity", "water", "cleaning"]
+            missing_fields = []
+            
+            for field in required_fields:
+                if field not in status:
+                    missing_fields.append(field)
+                else:
+                    field_data = status[field]
+                    if not isinstance(field_data, dict):
+                        missing_fields.append(f"{field} (not dict)")
+                    elif "status" not in field_data:
+                        missing_fields.append(f"{field}.status")
+                    elif "last_updated" not in field_data:
+                        missing_fields.append(f"{field}.last_updated")
+            
+            if missing_fields:
+                self.log_test(test_name, False, f"Missing required fields: {missing_fields}", {"status": status})
+                return None
+            
+            # Verify default values (for new building)
+            expected_defaults = {
+                "wifi": "active",
+                "elevator": "inactive", 
+                "electricity": "active",
+                "water": "active",
+                "cleaning": "active"
+            }
+            
+            default_check_passed = True
+            for field, expected_status in expected_defaults.items():
+                actual_status = status[field].get("status")
+                if actual_status not in ["active", "inactive", "maintenance"]:
+                    self.log_test(f"{test_name} - Status Values", False, 
+                                f"Invalid status value for {field}: {actual_status}")
+                    default_check_passed = False
+            
+            if default_check_passed:
+                self.log_test(test_name, True, "Bina durumu başarıyla getirildi", {
+                    "building_id": building_id,
+                    "wifi": status["wifi"]["status"],
+                    "elevator": status["elevator"]["status"],
+                    "electricity": status["electricity"]["status"],
+                    "water": status["water"]["status"],
+                    "cleaning": status["cleaning"]["status"]
+                })
+            
+            return status
+            
+        except Exception as e:
+            self.log_test(test_name, False, f"Error: {str(e)}")
+            return None
+
+    def test_update_building_status(self, building_id):
+        """Test 7: Bina durumu güncelleme (YENİ ÖZELLİK - ÖNCELİK: Orta)"""
+        test_name = "PUT /api/buildings/{building_id}/status - Durum Güncelleme"
+        
+        try:
+            # Test update data
+            update_data = {
+                "elevator": "active",
+                "wifi": "maintenance"
+            }
+            
+            response = requests.put(f"{BACKEND_URL}/buildings/{building_id}/status", 
+                                  json=update_data, timeout=30)
+            
+            if response.status_code != 200:
+                self.log_test(test_name, False, f"HTTP {response.status_code}", {"response": response.text})
+                return None
+                
+            updated_status = response.json()
+            
+            # Verify updates were applied
+            update_errors = []
+            
+            if updated_status.get("elevator", {}).get("status") != "active":
+                update_errors.append("elevator not updated to active")
+                
+            if updated_status.get("wifi", {}).get("status") != "maintenance":
+                update_errors.append("wifi not updated to maintenance")
+            
+            # Verify timestamps were updated
+            for field in ["elevator", "wifi"]:
+                if field in updated_status:
+                    last_updated = updated_status[field].get("last_updated")
+                    if not last_updated:
+                        update_errors.append(f"{field} missing last_updated timestamp")
+            
+            if update_errors:
+                self.log_test(test_name, False, f"Update validation failed: {update_errors}", 
+                            {"response": updated_status})
+                return None
+                
+            self.log_test(test_name, True, "Bina durumu başarıyla güncellendi", {
+                "building_id": building_id,
+                "updated_elevator": updated_status["elevator"]["status"],
+                "updated_wifi": updated_status["wifi"]["status"]
+            })
+            return updated_status
+            
+        except Exception as e:
+            self.log_test(test_name, False, f"Error: {str(e)}")
+            return None
+
+    def test_building_status_persistence(self, building_id):
+        """Test 8: Bina durumu kalıcılık kontrolü"""
+        test_name = "GET /api/buildings/{building_id}/status - Persistence Check"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/buildings/{building_id}/status", timeout=30)
+            
+            if response.status_code != 200:
+                self.log_test(test_name, False, f"HTTP {response.status_code}", {"response": response.text})
+                return None
+                
+            status = response.json()
+            
+            # Check if previous updates are still there
+            persistence_errors = []
+            
+            if status.get("elevator", {}).get("status") != "active":
+                persistence_errors.append("elevator status not persisted")
+                
+            if status.get("wifi", {}).get("status") != "maintenance":
+                persistence_errors.append("wifi status not persisted")
+            
+            if persistence_errors:
+                self.log_test(test_name, False, f"Persistence check failed: {persistence_errors}", 
+                            {"status": status})
+                return None
+                
+            self.log_test(test_name, True, "Durum güncellemeleri kalıcı olarak kaydedildi", {
+                "building_id": building_id,
+                "elevator_persisted": status["elevator"]["status"],
+                "wifi_persisted": status["wifi"]["status"]
+            })
+            return status
+            
+        except Exception as e:
+            self.log_test(test_name, False, f"Error: {str(e)}")
+            return None
     
     def run_all_tests(self):
         """Run all backend tests"""
