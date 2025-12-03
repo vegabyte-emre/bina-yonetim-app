@@ -706,6 +706,137 @@ async def update_request_status(request_id: str, status_data: dict):
         logging.error(f"Talep durum güncelleme hatası: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# LEGAL PROCESS (HUKUKİ SÜREÇ) ENDPOINTS
+@api_router.get("/apartments/{apartment_id}/legal-process")
+async def get_legal_process(apartment_id: str):
+    """Daire için hukuki süreç bilgilerini getir"""
+    try:
+        # Hukuki süreç kaydını kontrol et
+        legal_process = await db.legal_processes.find_one({"apartment_id": apartment_id})
+        
+        if not legal_process:
+            # Aidat borcu kontrol et
+            dues = await db.dues.find({
+                "apartment_id": apartment_id,
+                "paid": False
+            }).to_list(100)
+            
+            total_debt = sum(due["amount"] for due in dues)
+            overdue_months = len(dues)
+            
+            # Eğer 2+ ay gecikme varsa demo süreç oluştur
+            if overdue_months >= 2:
+                legal_process = {
+                    "apartment_id": apartment_id,
+                    "status": "warning_sent",
+                    "total_debt": total_debt,
+                    "overdue_months": overdue_months,
+                    "timeline": [
+                        {
+                            "stage": "warning_sent",
+                            "title": "İhtar Gönderildi",
+                            "description": "Aidat borcu nedeniyle resmi ihtar gönderilmiştir.",
+                            "date": datetime.utcnow(),
+                            "completed": True
+                        },
+                        {
+                            "stage": "legal_notice",
+                            "title": "Yasal Bildirim",
+                            "description": "Ödeme yapılmaması durumunda yasal işlem başlatılacaktır.",
+                            "date": None,
+                            "completed": False
+                        },
+                        {
+                            "stage": "lawyer_assigned",
+                            "title": "Avukata Devredildi",
+                            "description": "Dosya hukuk danışmanına iletilmiştir.",
+                            "date": None,
+                            "completed": False
+                        },
+                        {
+                            "stage": "lawsuit_filed",
+                            "title": "Dava Açıldı",
+                            "description": "Mahkeme sürecine geçilmiştir.",
+                            "date": None,
+                            "completed": False
+                        }
+                    ],
+                    "contact": {
+                        "lawyer_name": "Av. Mehmet Yılmaz",
+                        "lawyer_phone": "0 (212) 555 01 01",
+                        "lawyer_email": "m.yilmaz@hukuk.com"
+                    },
+                    "notes": "Ödeme planı için yönetim ile görüşebilirsiniz.",
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                result = await db.legal_processes.insert_one(legal_process)
+                legal_process["_id"] = str(result.inserted_id)
+            else:
+                # Borç yok veya az, süreç yok
+                return {
+                    "has_process": False,
+                    "total_debt": total_debt,
+                    "overdue_months": overdue_months,
+                    "message": "Hukuki süreç bulunmamaktadır."
+                }
+        
+        # ObjectId'yi stringe çevir
+        if legal_process.get("_id"):
+            legal_process["_id"] = str(legal_process["_id"])
+        
+        legal_process["has_process"] = True
+        return legal_process
+        
+    except Exception as e:
+        logging.error(f"Hukuki süreç getirme hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/apartments/{apartment_id}/payment-plan")
+async def get_payment_plan(apartment_id: str):
+    """Ödeme planı önerisi getir"""
+    try:
+        # Ödenmemiş aidatları getir
+        dues = await db.dues.find({
+            "apartment_id": apartment_id,
+            "paid": False
+        }).sort("due_date", 1).to_list(100)
+        
+        if not dues:
+            return {
+                "has_debt": False,
+                "message": "Borcunuz bulunmamaktadır."
+            }
+        
+        total_debt = sum(due["amount"] for due in dues)
+        
+        # 3 aylık taksit planı öner
+        installment_amount = total_debt / 3
+        
+        payment_plan = {
+            "has_debt": True,
+            "total_debt": total_debt,
+            "overdue_count": len(dues),
+            "suggested_plan": {
+                "installments": 3,
+                "monthly_amount": round(installment_amount, 2),
+                "description": "3 eşit taksit ile ödeme yapabilirsiniz."
+            },
+            "dues": []
+        }
+        
+        for due in dues:
+            if due.get("_id"):
+                due["_id"] = str(due["_id"])
+            payment_plan["dues"].append(due)
+        
+        return payment_plan
+        
+    except Exception as e:
+        logging.error(f"Ödeme planı hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Include the router in the main app
 app.include_router(api_router)
 
