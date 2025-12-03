@@ -349,8 +349,10 @@ export default function HomeScreen() {
               key={item.id}
               style={styles.menuItem}
               onPress={() => {
-                // Henüz sayfalar hazır değil, bildirim göster
-                console.log(`Navigating to ${item.route}`);
+                if (item.route === '/dues') {
+                  router.push('/dues');
+                } else {
+                  console.log(`Navigating to ${item.route}`);
               }}
             >
               <View style={[styles.menuIconContainer, { backgroundColor: `${item.color}15` }]}>
