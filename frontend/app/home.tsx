@@ -340,7 +340,7 @@ export default function HomeScreen() {
           ) : (
             <Text style={styles.errorText}>Bina durumu yüklenemedi</Text>
           )}
-        </View>
+        </TouchableOpacity>
 
         {/* Menü Grid */}
         <View style={styles.menuGrid}>
