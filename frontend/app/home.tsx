@@ -270,7 +270,7 @@ export default function HomeScreen() {
                   >
                     <Ionicons
                       name="flash"
-                      size={28}
+                      size={24}
                       color={getStatusConfig(buildingStatus.electricity.status).color}
                     />
                   </View>
