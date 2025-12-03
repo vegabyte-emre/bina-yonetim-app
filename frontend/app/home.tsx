@@ -235,7 +235,7 @@ export default function HomeScreen() {
                   >
                     <Ionicons
                       name="arrow-up-circle"
-                      size={28}
+                      size={24}
                       color={getStatusConfig(buildingStatus.elevator.status).color}
                     />
                   </View>
