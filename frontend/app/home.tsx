@@ -353,6 +353,8 @@ export default function HomeScreen() {
                   router.push('/dues');
                 } else if (item.route === '/announcements') {
                   router.push('/announcements');
+                } else if (item.route === '/requests') {
+                  router.push('/requests');
                 } else {
                   console.log(`Navigating to ${item.route}`);
                 }
