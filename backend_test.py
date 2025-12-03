@@ -439,10 +439,28 @@ class BackendTester:
         self.test_login_existing_user()
         
         # Test 4: Get buildings
-        self.test_get_buildings()
+        buildings = self.test_get_buildings()
         
         # Test 5: Get user details
         self.test_get_user_details()
+        
+        # Get building ID for status tests
+        building_id = "693039d65725275621c2f007"  # Default from requirements
+        if buildings and len(buildings) > 0:
+            building_id = buildings[0]["_id"]
+            print(f"🏗️ Using building ID for status tests: {building_id}")
+        
+        print("\n🔥 YENİ ÖZELLİK TESTLERİ - Bina Durumu API'leri")
+        print("-" * 40)
+        
+        # Test 6: Get building status (NEW FEATURE - HIGH PRIORITY)
+        self.test_get_building_status(building_id)
+        
+        # Test 7: Update building status (NEW FEATURE - MEDIUM PRIORITY)  
+        self.test_update_building_status(building_id)
+        
+        # Test 8: Verify status persistence
+        self.test_building_status_persistence(building_id)
         
         # Summary
         print("=" * 60)
@@ -450,6 +468,16 @@ class BackendTester:
         total = len(self.test_results)
         
         print(f"📊 Test Sonuçları: {passed}/{total} test başarılı")
+        
+        # Separate old vs new feature results
+        old_tests = [r for r in self.test_results if "status" not in r["test"].lower()]
+        new_tests = [r for r in self.test_results if "status" in r["test"].lower()]
+        
+        old_passed = sum(1 for r in old_tests if r["success"])
+        new_passed = sum(1 for r in new_tests if r["success"])
+        
+        print(f"   📋 Mevcut API'ler: {old_passed}/{len(old_tests)} başarılı")
+        print(f"   🔥 Yeni Bina Durumu API'leri: {new_passed}/{len(new_tests)} başarılı")
         
         if passed == total:
             print("🎉 Tüm testler başarıyla geçti!")
