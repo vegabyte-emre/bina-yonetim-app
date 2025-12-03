@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +6,9 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
-import uuid
+from typing import List, Optional
 from datetime import datetime
-
+from bson import ObjectId
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -25,32 +24,190 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# ========== MODELS ==========
 
-# Define Models
-class StatusCheck(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+class PyObjectId(ObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+    @classmethod
+    def validate(cls, v):
+        if not ObjectId.is_valid(v):
+            raise ValueError("Invalid ObjectId")
+        return ObjectId(v)
 
-# Add your routes to the router instead of directly to app
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(type="string")
+
+# Bina Modeli
+class Building(BaseModel):
+    id: Optional[str] = Field(alias="_id", default=None)
+    name: str
+    address: str
+    block_count: int = 1
+    apartment_count: int
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        populate_by_name = True
+        json_encoders = {ObjectId: str}
+
+# Daire Modeli
+class Apartment(BaseModel):
+    id: Optional[str] = Field(alias="_id", default=None)
+    building_id: str
+    block: str = "A"
+    apartment_number: int
+    floor: int
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        populate_by_name = True
+        json_encoders = {ObjectId: str}
+
+# Kullanıcı Modeli
+class User(BaseModel):
+    id: Optional[str] = Field(alias="_id", default=None)
+    phone_number: str
+    name: str
+    role: str  # 'tenant' (kiracı), 'owner' (mülk sahibi), 'building_admin', 'super_admin'
+    building_id: Optional[str] = None
+    apartment_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        populate_by_name = True
+        json_encoders = {ObjectId: str}
+
+# Giriş İsteği
+class LoginRequest(BaseModel):
+    phone_number: str
+    role: str  # 'tenant' veya 'owner'
+
+# Giriş Yanıtı
+class LoginResponse(BaseModel):
+    success: bool
+    message: str
+    user: Optional[dict] = None
+
+# ========== ENDPOINTS ==========
+
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Bina Yönetim Sistemi API"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+# AUTH ENDPOINTS
+@api_router.post("/auth/login", response_model=LoginResponse)
+async def login(request: LoginRequest):
+    """
+    Basit giriş sistemi (SMS doğrulama sonra eklenecek)
+    """
+    try:
+        # Kullanıcıyı telefon numarasına göre bul
+        user_data = await db.users.find_one({"phone_number": request.phone_number})
+        
+        if user_data:
+            # Kullanıcı var, bilgileri döndür
+            user_data["_id"] = str(user_data["_id"])
+            if user_data.get("building_id"):
+                user_data["building_id"] = str(user_data["building_id"])
+            if user_data.get("apartment_id"):
+                user_data["apartment_id"] = str(user_data["apartment_id"])
+            
+            return LoginResponse(
+                success=True,
+                message="Giriş başarılı",
+                user=user_data
+            )
+        else:
+            # Yeni kullanıcı oluştur (demo için)
+            # Gerçek uygulamada bu aşama farklı olacak
+            
+            # İlk binayı bul veya oluştur
+            building = await db.buildings.find_one()
+            if not building:
+                # Demo bina oluştur
+                building_data = {
+                    "name": "Örnek Sitesi",
+                    "address": "İstanbul, Türkiye",
+                    "block_count": 2,
+                    "apartment_count": 20,
+                    "created_at": datetime.utcnow()
+                }
+                result = await db.buildings.insert_one(building_data)
+                building_id = str(result.inserted_id)
+            else:
+                building_id = str(building["_id"])
+            
+            # Demo daire oluştur
+            apartment_data = {
+                "building_id": building_id,
+                "block": "A",
+                "apartment_number": 5,
+                "floor": 2,
+                "created_at": datetime.utcnow()
+            }
+            apartment_result = await db.apartments.insert_one(apartment_data)
+            apartment_id = str(apartment_result.inserted_id)
+            
+            # Yeni kullanıcı oluştur
+            new_user = {
+                "phone_number": request.phone_number,
+                "name": "Demo Kullanıcı",
+                "role": request.role,
+                "building_id": building_id,
+                "apartment_id": apartment_id,
+                "created_at": datetime.utcnow()
+            }
+            
+            result = await db.users.insert_one(new_user)
+            new_user["_id"] = str(result.inserted_id)
+            new_user["building_id"] = building_id
+            new_user["apartment_id"] = apartment_id
+            
+            return LoginResponse(
+                success=True,
+                message="Hesap oluşturuldu ve giriş yapıldı",
+                user=new_user
+            )
+            
+    except Exception as e:
+        logging.error(f"Giriş hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+# BUILDING ENDPOINTS
+@api_router.get("/buildings")
+async def get_buildings():
+    """Tüm binaları getir"""
+    buildings = await db.buildings.find().to_list(100)
+    for building in buildings:
+        building["_id"] = str(building["_id"])
+    return buildings
+
+@api_router.get("/buildings/{building_id}")
+async def get_building(building_id: str):
+    """Belirli bir binayı getir"""
+    building = await db.buildings.find_one({"_id": ObjectId(building_id)})
+    if building:
+        building["_id"] = str(building["_id"])
+        return building
+    raise HTTPException(status_code=404, detail="Bina bulunamadı")
+
+# USER ENDPOINTS
+@api_router.get("/users/{user_id}")
+async def get_user(user_id: str):
+    """Kullanıcı bilgilerini getir"""
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if user:
+        user["_id"] = str(user["_id"])
+        if user.get("building_id"):
+            user["building_id"] = str(user["building_id"])
+        if user.get("apartment_id"):
+            user["apartment_id"] = str(user["apartment_id"])
+        return user
+    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
 # Include the router in the main app
 app.include_router(api_router)
