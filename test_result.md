@@ -178,12 +178,11 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Kullanıcı giriş API'si (POST /api/auth/login)"
     - "Giriş ekranı (Login Screen)"
     - "Ana sayfa (Home Screen)"
   stuck_tasks: []
@@ -193,3 +192,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Backend ve frontend için giriş sistemi geliştirildi. Lütfen önce backend API'lerini test et. Test kullanıcıları: 5551234567 (Kiracı) ve 5559876543 (Mülk Sahibi). Giriş API'si yeni kullanıcı için otomatik demo bina ve daire oluşturuyor."
+  - agent: "testing"
+    message: "✅ Backend API testleri tamamlandı! Tüm 3 endpoint başarıyla çalışıyor: POST /api/auth/login (yeni/mevcut kullanıcı girişi), GET /api/buildings (bina listeleme), GET /api/users/{user_id} (kullanıcı detayları). MongoDB'de 2 kullanıcı, 1 bina, 2 daire kaydı oluşturuldu. Backend tamamen hazır, frontend testlerine geçilebilir."
