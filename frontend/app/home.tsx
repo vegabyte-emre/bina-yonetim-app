@@ -351,6 +351,8 @@ export default function HomeScreen() {
               onPress={() => {
                 if (item.route === '/dues') {
                   router.push('/dues');
+                } else if (item.route === '/announcements') {
+                  router.push('/announcements');
                 } else {
                   console.log(`Navigating to ${item.route}`);
                 }
