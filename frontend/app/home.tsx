@@ -1,11 +1,95 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
+// Bina durumu tipleri
+type StatusType = 'active' | 'inactive' | 'maintenance';
+
+interface FacilityStatus {
+  status: StatusType;
+  last_updated: string;
+}
+
+interface BuildingStatus {
+  wifi: FacilityStatus;
+  elevator: FacilityStatus;
+  electricity: FacilityStatus;
+  water: FacilityStatus;
+  cleaning?: FacilityStatus;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
+  const [buildingStatus, setBuildingStatus] = useState<BuildingStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Demo bina ID'si (gerçek uygulamada kullanıcının binasından gelecek)
+  const buildingId = 'demo-building-id';
+
+  useEffect(() => {
+    fetchBuildingStatus();
+  }, []);
+
+  const fetchBuildingStatus = async () => {
+    try {
+      setLoading(true);
+      // İlk önce bina ID'sini alalım (gerçek uygulamada kullanıcıdan gelecek)
+      const buildingsResponse = await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/buildings`);
+      const buildings = await buildingsResponse.json();
+      
+      if (buildings && buildings.length > 0) {
+        const actualBuildingId = buildings[0]._id;
+        
+        // Bina durumunu getir
+        const statusResponse = await fetch(
+          `${EXPO_PUBLIC_BACKEND_URL}/api/buildings/${actualBuildingId}/status`
+        );
+        const statusData = await statusResponse.json();
+        setBuildingStatus(statusData);
+      }
+    } catch (error) {
+      console.error('Bina durumu yükleme hatası:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusConfig = (status: StatusType) => {
+    switch (status) {
+      case 'active':
+        return {
+          color: '#10b981',
+          bgColor: '#d1fae5',
+          text: 'Aktif',
+          dotColor: '#10b981',
+        };
+      case 'inactive':
+        return {
+          color: '#ef4444',
+          bgColor: '#fee2e2',
+          text: 'Arızalı',
+          dotColor: '#ef4444',
+        };
+      case 'maintenance':
+        return {
+          color: '#f59e0b',
+          bgColor: '#fef3c7',
+          text: 'Bakımda',
+          dotColor: '#f59e0b',
+        };
+      default:
+        return {
+          color: '#6b7280',
+          bgColor: '#f3f4f6',
+          text: 'Bilinmiyor',
+          dotColor: '#6b7280',
+        };
+    }
+  };
 
   const menuItems = [
     {
