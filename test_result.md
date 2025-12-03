@@ -264,7 +264,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Bina durumu API'si (GET /api/buildings/{building_id}/status)"
     - "Bina durumu kartı (Building Status Card)"
   stuck_tasks: []
   test_all: false
@@ -277,3 +276,5 @@ agent_communication:
     message: "✅ Backend API testleri tamamlandı! Tüm 3 endpoint başarıyla çalışıyor: POST /api/auth/login (yeni/mevcut kullanıcı girişi), GET /api/buildings (bina listeleme), GET /api/users/{user_id} (kullanıcı detayları). MongoDB'de 2 kullanıcı, 1 bina, 2 daire kaydı oluşturuldu. Backend tamamen hazır, frontend testlerine geçilebilir."
   - agent: "main"
     message: "Bina durumu özelliği eklendi. Backend'e 2 yeni endpoint eklendi: GET (durumu getir) ve PUT (durumu güncelle). Frontend'e dinamik bina durumu kartı eklendi - WiFi, Asansör, Elektrik, Su durumlarını modern tasarım ile gösteriyor. Lütfen yeni backend endpoint'lerini test et."
+  - agent: "testing"
+    message: "✅ Bina Durumu API testleri tamamlandı! Tüm yeni endpoint'ler başarıyla çalışıyor: GET /api/buildings/{building_id}/status (bina durumu getirme) ve PUT /api/buildings/{building_id}/status (durum güncelleme). Varsayılan değerler doğru, güncelleme işlemleri çalışıyor, timestamp'ler doğru güncelleniyor. MongoDB'de building_status collection'ı oluşturuldu. Backend API'leri tamamen hazır."
