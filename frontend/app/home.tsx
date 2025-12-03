@@ -353,6 +353,7 @@ export default function HomeScreen() {
                   router.push('/dues');
                 } else {
                   console.log(`Navigating to ${item.route}`);
+                }
               }}
             >
               <View style={[styles.menuIconContainer, { backgroundColor: `${item.color}15` }]}>
