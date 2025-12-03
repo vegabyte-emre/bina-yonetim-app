@@ -386,4 +386,90 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     lineHeight: 20,
   },
+  buildingStatusCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  buildingStatusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  buildingStatusTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginLeft: 12,
+  },
+  statusGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  statusItem: {
+    width: '47%',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  statusIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  statusActive: {
+    backgroundColor: '#d1fae5',
+  },
+  statusInactive: {
+    backgroundColor: '#fee2e2',
+  },
+  statusLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  statusDotActive: {
+    backgroundColor: '#10b981',
+  },
+  statusDotInactive: {
+    backgroundColor: '#ef4444',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statusTextActive: {
+    color: '#10b981',
+  },
+  statusTextInactive: {
+    color: '#ef4444',
+  },
 });
