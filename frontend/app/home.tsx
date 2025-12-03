@@ -179,10 +179,15 @@ export default function HomeScreen() {
         </View>
 
         {/* Bina Durumu Kartı */}
-        <View style={styles.buildingStatusCard}>
+        <TouchableOpacity
+          style={styles.buildingStatusCard}
+          onPress={() => router.push('/building-status')}
+          activeOpacity={0.7}
+        >
           <View style={styles.buildingStatusHeader}>
             <Ionicons name="business" size={24} color="#8b5cf6" />
             <Text style={styles.buildingStatusTitle}>Bina Durumu</Text>
+            <Ionicons name="chevron-forward" size={20} color="#6b7280" />
           </View>
           
           {loading ? (
