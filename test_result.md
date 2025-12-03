@@ -101,3 +101,86 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Bina yönetim sistemi mobil uygulaması - Giriş ekranı ve ana sayfa geliştirme"
+
+backend:
+  - task: "Kullanıcı giriş API'si (POST /api/auth/login)"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Basit giriş sistemi oluşturuldu. Telefon numarası ile giriş yapılıyor. Kullanıcı yoksa otomatik olarak demo kullanıcı, bina ve daire oluşturuluyor. SMS doğrulama sonra eklenecek."
+  
+  - task: "Bina listeleme API'si (GET /api/buildings)"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Tüm binaları listeleyen endpoint hazırlandı."
+  
+  - task: "Kullanıcı bilgisi getirme API'si (GET /api/users/{user_id})"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Kullanıcı detaylarını getiren endpoint hazırlandı."
+
+frontend:
+  - task: "Giriş ekranı (Login Screen)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Modern giriş ekranı tasarlandı. Telefon numarası girişi ve rol seçimi (Kiracı/Mülk Sahibi) mevcut. Test kullanıcıları gösteriliyor. Backend API'ye bağlanıyor."
+  
+  - task: "Ana sayfa (Home Screen)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/home.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Ana sayfa tasarlandı. Header, aidat özet kartı, menü grid (6 öğe), ve son duyurular bölümü eklendi. Henüz navigation route'ları bağlanmadı."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Kullanıcı giriş API'si (POST /api/auth/login)"
+    - "Giriş ekranı (Login Screen)"
+    - "Ana sayfa (Home Screen)"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Backend ve frontend için giriş sistemi geliştirildi. Lütfen önce backend API'lerini test et. Test kullanıcıları: 5551234567 (Kiracı) ve 5559876543 (Mülk Sahibi). Giriş API'si yeni kullanıcı için otomatik demo bina ve daire oluşturuyor."
