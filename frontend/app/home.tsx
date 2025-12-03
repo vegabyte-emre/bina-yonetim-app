@@ -94,6 +94,64 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Bina Durumu Kartı */}
+        <View style={styles.buildingStatusCard}>
+          <View style={styles.buildingStatusHeader}>
+            <Ionicons name="business" size={24} color="#8b5cf6" />
+            <Text style={styles.buildingStatusTitle}>Bina Durumu</Text>
+          </View>
+          
+          <View style={styles.statusGrid}>
+            {/* Wi-Fi Durumu */}
+            <View style={styles.statusItem}>
+              <View style={[styles.statusIconContainer, styles.statusActive]}>
+                <Ionicons name="wifi" size={28} color="#10b981" />
+              </View>
+              <Text style={styles.statusLabel}>Wi-Fi</Text>
+              <View style={styles.statusBadge}>
+                <View style={[styles.statusDot, styles.statusDotActive]} />
+                <Text style={[styles.statusText, styles.statusTextActive]}>Aktif</Text>
+              </View>
+            </View>
+
+            {/* Asansör Durumu */}
+            <View style={styles.statusItem}>
+              <View style={[styles.statusIconContainer, styles.statusInactive]}>
+                <Ionicons name="arrow-up-circle" size={28} color="#ef4444" />
+              </View>
+              <Text style={styles.statusLabel}>Asansör</Text>
+              <View style={styles.statusBadge}>
+                <View style={[styles.statusDot, styles.statusDotInactive]} />
+                <Text style={[styles.statusText, styles.statusTextInactive]}>Arızalı</Text>
+              </View>
+            </View>
+
+            {/* Elektrik Durumu */}
+            <View style={styles.statusItem}>
+              <View style={[styles.statusIconContainer, styles.statusActive]}>
+                <Ionicons name="flash" size={28} color="#10b981" />
+              </View>
+              <Text style={styles.statusLabel}>Elektrik</Text>
+              <View style={styles.statusBadge}>
+                <View style={[styles.statusDot, styles.statusDotActive]} />
+                <Text style={[styles.statusText, styles.statusTextActive]}>Aktif</Text>
+              </View>
+            </View>
+
+            {/* Su Durumu */}
+            <View style={styles.statusItem}>
+              <View style={[styles.statusIconContainer, styles.statusActive]}>
+                <Ionicons name="water" size={28} color="#10b981" />
+              </View>
+              <Text style={styles.statusLabel}>Su</Text>
+              <View style={styles.statusBadge}>
+                <View style={[styles.statusDot, styles.statusDotActive]} />
+                <Text style={[styles.statusText, styles.statusTextActive]}>Aktif</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
         {/* Menü Grid */}
         <View style={styles.menuGrid}>
           {menuItems.map((item) => (
