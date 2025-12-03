@@ -418,6 +418,154 @@ async def get_due_detail(due_id: str):
         logging.error(f"Aidat detay hatası: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ANNOUNCEMENTS (DUYURULAR) ENDPOINTS
+@api_router.get("/buildings/{building_id}/announcements")
+async def get_building_announcements(building_id: str, category: Optional[str] = None):
+    """Bina duyurularını getir"""
+    try:
+        # Duyuruları getir
+        query = {"building_id": building_id}
+        if category and category != "all":
+            query["category"] = category
+        
+        announcements = await db.announcements.find(query).sort("created_at", -1).to_list(100)
+        
+        if not announcements:
+            # Demo duyurular oluştur
+            demo_announcements = [
+                {
+                    "building_id": building_id,
+                    "title": "Su Kesintisi Bildirisi",
+                    "content": "Yarın saat 09:00 - 17:00 arası bakım çalışması nedeniyle su kesintisi yaşanacaktır. Lütfen gerekli önlemlerinizi alınız.",
+                    "category": "maintenance",
+                    "priority": "high",
+                    "created_at": datetime.utcnow(),
+                    "created_by": "Site Yönetimi"
+                },
+                {
+                    "building_id": building_id,
+                    "title": "Aylık Toplantı Duyurusu",
+                    "content": "15 Aralık Cuma günü saat 19:00'da aylık site toplantımız yapılacaktır. Tüm site sakinlerinin katılımı beklenmektedir.",
+                    "category": "meeting",
+                    "priority": "normal",
+                    "created_at": datetime.utcnow(),
+                    "created_by": "Site Yönetimi"
+                },
+                {
+                    "building_id": building_id,
+                    "title": "Asansör Arızası",
+                    "content": "A Blok asansörü arıza nedeniyle devre dışıdır. Teknisyen çağrılmıştır. En kısa sürede tamir edilecektir.",
+                    "category": "maintenance",
+                    "priority": "urgent",
+                    "created_at": datetime.utcnow(),
+                    "created_by": "Teknik Servis"
+                },
+                {
+                    "building_id": building_id,
+                    "title": "Yeni Yıl Kutlaması",
+                    "content": "31 Aralık Salı günü saat 20:00'da site bahçesinde yılbaşı kutlaması düzenlenecektir. Ailenizle birlikte katılabilirsiniz.",
+                    "category": "general",
+                    "priority": "normal",
+                    "created_at": datetime.utcnow(),
+                    "created_by": "Site Yönetimi"
+                },
+                {
+                    "building_id": building_id,
+                    "title": "Ortak Alan Temizliği",
+                    "content": "Her Pazartesi ve Perşembe günleri ortak alanların temizliği yapılmaktadır. Lütfen bu saatlerde merdiven ve koridorları kullanırken dikkatli olunuz.",
+                    "category": "general",
+                    "priority": "low",
+                    "created_at": datetime.utcnow(),
+                    "created_by": "Site Yönetimi"
+                }
+            ]
+            
+            for announcement in demo_announcements:
+                result = await db.announcements.insert_one(announcement)
+                announcement["_id"] = str(result.inserted_id)
+            
+            announcements = demo_announcements
+        
+        # ObjectId'leri stringe çevir
+        for announcement in announcements:
+            if announcement.get("_id"):
+                announcement["_id"] = str(announcement["_id"])
+        
+        return announcements
+        
+    except Exception as e:
+        logging.error(f"Duyuru getirme hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/announcements/{announcement_id}")
+async def get_announcement_detail(announcement_id: str):
+    """Duyuru detayını getir"""
+    try:
+        announcement = await db.announcements.find_one({"_id": ObjectId(announcement_id)})
+        
+        if not announcement:
+            raise HTTPException(status_code=404, detail="Duyuru bulunamadı")
+        
+        announcement["_id"] = str(announcement["_id"])
+        return announcement
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Duyuru detay hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/announcements/{announcement_id}/read")
+async def mark_announcement_read(announcement_id: str, user_id: str):
+    """Duyuruyu okundu olarak işaretle"""
+    try:
+        # Okundu kaydı oluştur veya güncelle
+        read_record = {
+            "announcement_id": announcement_id,
+            "user_id": user_id,
+            "read_at": datetime.utcnow()
+        }
+        
+        # Mevcut kayıt var mı kontrol et
+        existing = await db.announcement_reads.find_one({
+            "announcement_id": announcement_id,
+            "user_id": user_id
+        })
+        
+        if not existing:
+            await db.announcement_reads.insert_one(read_record)
+        else:
+            await db.announcement_reads.update_one(
+                {"announcement_id": announcement_id, "user_id": user_id},
+                {"$set": {"read_at": datetime.utcnow()}}
+            )
+        
+        return {"success": True, "message": "Duyuru okundu olarak işaretlendi"}
+        
+    except Exception as e:
+        logging.error(f"Duyuru okundu işaretleme hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/users/{user_id}/announcements/unread-count")
+async def get_unread_announcements_count(user_id: str, building_id: str):
+    """Okunmamış duyuru sayısını getir"""
+    try:
+        # Tüm duyuruları getir
+        all_announcements = await db.announcements.find({"building_id": building_id}).to_list(100)
+        
+        # Okunan duyuruları getir
+        read_announcements = await db.announcement_reads.find({"user_id": user_id}).to_list(100)
+        read_ids = [r["announcement_id"] for r in read_announcements]
+        
+        # Okunmamış sayısını hesapla
+        unread_count = len([a for a in all_announcements if str(a["_id"]) not in read_ids])
+        
+        return {"unread_count": unread_count}
+        
+    except Exception as e:
+        logging.error(f"Okunmamış duyuru sayısı hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Include the router in the main app
 app.include_router(api_router)
 
