@@ -308,7 +308,7 @@ export default function HomeScreen() {
                   >
                     <Ionicons
                       name="water"
-                      size={28}
+                      size={24}
                       color={getStatusConfig(buildingStatus.water.status).color}
                     />
                   </View>
