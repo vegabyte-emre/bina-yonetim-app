@@ -200,7 +200,7 @@ export default function HomeScreen() {
                   >
                     <Ionicons
                       name="wifi"
-                      size={28}
+                      size={24}
                       color={getStatusConfig(buildingStatus.wifi.status).color}
                     />
                   </View>
