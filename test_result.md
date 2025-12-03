@@ -191,27 +191,33 @@ test_plan:
 
   - task: "Bina durumu API'si (GET /api/buildings/{building_id}/status)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Bina özelliklerinin durumunu getiren API eklendi. WiFi, asansör, elektrik, su, temizlik durumları için endpoint. Varsayılan olarak asansör 'inactive', diğerleri 'active' oluşturuluyor."
+      - working: true
+        agent: "testing"
+        comment: "✅ Bina durumu API'si başarıyla test edildi. Tüm gerekli alanlar mevcut (wifi, elevator, electricity, water, cleaning). Her alan için status ve last_updated bilgisi doğru. Varsayılan değerler doğru: wifi=active, elevator=inactive, electricity=active, water=active, cleaning=active. API yeni bina için otomatik varsayılan durum oluşturuyor."
 
   - task: "Bina durumu güncelleme API'si (PUT /api/buildings/{building_id}/status)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Admin paneli için bina durumunu güncelleme endpoint'i eklendi. Durum değişikliklerini timestamp ile kaydediyor."
+      - working: true
+        agent: "testing"
+        comment: "✅ Bina durumu güncelleme API'si başarıyla test edildi. Elevator 'active' ve wifi 'maintenance' olarak güncellendi. Timestamp'ler doğru şekilde güncelleniyor. Güncellemeler kalıcı olarak MongoDB'de saklanıyor. API sadece geçerli alanları (wifi, elevator, electricity, water, cleaning) kabul ediyor."
 
 frontend:
   - task: "Giriş ekranı (Login Screen)"
