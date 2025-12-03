@@ -189,8 +189,85 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Bina durumu API'si (GET /api/buildings/{building_id}/status)"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Bina özelliklerinin durumunu getiren API eklendi. WiFi, asansör, elektrik, su, temizlik durumları için endpoint. Varsayılan olarak asansör 'inactive', diğerleri 'active' oluşturuluyor."
+
+  - task: "Bina durumu güncelleme API'si (PUT /api/buildings/{building_id}/status)"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Admin paneli için bina durumunu güncelleme endpoint'i eklendi. Durum değişikliklerini timestamp ile kaydediyor."
+
+frontend:
+  - task: "Giriş ekranı (Login Screen)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Modern giriş ekranı tasarlandı. Telefon numarası girişi ve rol seçimi (Kiracı/Mülk Sahibi) mevcut. Test kullanıcıları gösteriliyor. Backend API'ye bağlanıyor."
+  
+  - task: "Ana sayfa (Home Screen)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/home.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Ana sayfa tasarlandı. Header, aidat özet kartı, menü grid (6 öğe), ve son duyurular bölümü eklendi. Henüz navigation route'ları bağlanmadı."
+
+  - task: "Bina durumu kartı (Building Status Card)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/home.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Ana sayfaya dinamik bina durumu kartı eklendi. WiFi, Asansör, Elektrik, Su durumlarını modern ikonlar ve renklerle (yeşil=aktif, kırmızı=arızalı, turuncu=bakımda) gösteriyor. API'den veri çekiyor."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 2
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Bina durumu API'si (GET /api/buildings/{building_id}/status)"
+    - "Bina durumu kartı (Building Status Card)"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
 agent_communication:
   - agent: "main"
     message: "Backend ve frontend için giriş sistemi geliştirildi. Lütfen önce backend API'lerini test et. Test kullanıcıları: 5551234567 (Kiracı) ve 5559876543 (Mülk Sahibi). Giriş API'si yeni kullanıcı için otomatik demo bina ve daire oluşturuyor."
   - agent: "testing"
     message: "✅ Backend API testleri tamamlandı! Tüm 3 endpoint başarıyla çalışıyor: POST /api/auth/login (yeni/mevcut kullanıcı girişi), GET /api/buildings (bina listeleme), GET /api/users/{user_id} (kullanıcı detayları). MongoDB'de 2 kullanıcı, 1 bina, 2 daire kaydı oluşturuldu. Backend tamamen hazır, frontend testlerine geçilebilir."
+  - agent: "main"
+    message: "Bina durumu özelliği eklendi. Backend'e 2 yeni endpoint eklendi: GET (durumu getir) ve PUT (durumu güncelle). Frontend'e dinamik bina durumu kartı eklendi - WiFi, Asansör, Elektrik, Su durumlarını modern tasarım ile gösteriyor. Lütfen yeni backend endpoint'lerini test et."
