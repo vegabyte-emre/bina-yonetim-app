@@ -657,4 +657,10 @@ const styles = StyleSheet.create({
   statusTextInactive: {
     color: '#ef4444',
   },
+  errorText: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
 });
