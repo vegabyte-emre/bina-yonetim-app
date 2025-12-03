@@ -357,6 +357,8 @@ export default function HomeScreen() {
                   router.push('/requests');
                 } else if (item.route === '/legal') {
                   router.push('/legal');
+                } else if (item.route === '/profile') {
+                  router.push('/profile');
                 } else {
                   console.log(`Navigating to ${item.route}`);
                 }
