@@ -293,6 +293,131 @@ async def update_building_status(building_id: str, status_update: dict):
         logging.error(f"Bina durumu güncelleme hatası: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# DUES (AİDAT) ENDPOINTS
+@api_router.get("/apartments/{apartment_id}/dues")
+async def get_apartment_dues(apartment_id: str):
+    """Daire için aidat bilgilerini getir"""
+    try:
+        # Aidat tahakkuklarını getir
+        dues = await db.dues.find({"apartment_id": apartment_id}).sort("due_date", -1).to_list(100)
+        
+        if not dues:
+            # Demo aidat oluştur
+            demo_dues = []
+            current_date = datetime.utcnow()
+            
+            for i in range(6):
+                month_offset = i
+                due_date = datetime(current_date.year, current_date.month - month_offset, 1) if current_date.month > month_offset else datetime(current_date.year - 1, 12 - (month_offset - current_date.month), 1)
+                
+                is_paid = i > 0  # Sadece bu ay ödenmemiş
+                
+                due_doc = {
+                    "apartment_id": apartment_id,
+                    "amount": 750.00,
+                    "month": due_date.month,
+                    "year": due_date.year,
+                    "due_date": due_date,
+                    "paid": is_paid,
+                    "payment_date": due_date if is_paid else None,
+                    "description": f"{due_date.strftime('%B %Y')} Aidat",
+                    "created_at": datetime.utcnow()
+                }
+                
+                result = await db.dues.insert_one(due_doc)
+                due_doc["_id"] = str(result.inserted_id)
+                demo_dues.append(due_doc)
+            
+            dues = demo_dues
+        
+        # ObjectId'leri stringe çevir
+        for due in dues:
+            if due.get("_id"):
+                due["_id"] = str(due["_id"])
+        
+        # Toplam borç hesapla
+        total_debt = sum(due["amount"] for due in dues if not due.get("paid"))
+        
+        return {
+            "dues": dues,
+            "total_debt": total_debt,
+            "overdue_count": len([d for d in dues if not d.get("paid") and d.get("due_date") < datetime.utcnow()])
+        }
+        
+    except Exception as e:
+        logging.error(f"Aidat getirme hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/dues/{due_id}/pay")
+async def pay_due(due_id: str, payment_info: dict):
+    """Aidat ödemesi yap (Test ödeme)"""
+    try:
+        # Aidat kaydını bul
+        due = await db.dues.find_one({"_id": ObjectId(due_id)})
+        
+        if not due:
+            raise HTTPException(status_code=404, detail="Aidat kaydı bulunamadı")
+        
+        if due.get("paid"):
+            raise HTTPException(status_code=400, detail="Bu aidat zaten ödenmiş")
+        
+        # Test ödeme - gerçek ödeme entegrasyonu sonra eklenecek
+        # Şimdilik her zaman başarılı kabul ediyoruz
+        payment_successful = True
+        
+        if payment_successful:
+            # Ödemeyi işaretle
+            await db.dues.update_one(
+                {"_id": ObjectId(due_id)},
+                {
+                    "$set": {
+                        "paid": True,
+                        "payment_date": datetime.utcnow(),
+                        "payment_method": payment_info.get("method", "test"),
+                        "transaction_id": f"TEST-{datetime.utcnow().timestamp()}"
+                    }
+                }
+            )
+            
+            # Güncellenmiş kaydı getir
+            updated_due = await db.dues.find_one({"_id": ObjectId(due_id)})
+            updated_due["_id"] = str(updated_due["_id"])
+            
+            return {
+                "success": True,
+                "message": "Ödeme başarılı",
+                "due": updated_due
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Ödeme başarısız"
+            }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Ödeme hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/dues/{due_id}")
+async def get_due_detail(due_id: str):
+    """Aidat detayını getir"""
+    try:
+        due = await db.dues.find_one({"_id": ObjectId(due_id)})
+        
+        if not due:
+            raise HTTPException(status_code=404, detail="Aidat kaydı bulunamadı")
+        
+        due["_id"] = str(due["_id"])
+        return due
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Aidat detay hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Include the router in the main app
 app.include_router(api_router)
 
