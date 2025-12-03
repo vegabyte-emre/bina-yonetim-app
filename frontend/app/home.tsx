@@ -185,55 +185,156 @@ export default function HomeScreen() {
             <Text style={styles.buildingStatusTitle}>Bina Durumu</Text>
           </View>
           
-          <View style={styles.statusGrid}>
-            {/* Wi-Fi Durumu */}
-            <View style={styles.statusItem}>
-              <View style={[styles.statusIconContainer, styles.statusActive]}>
-                <Ionicons name="wifi" size={28} color="#10b981" />
-              </View>
-              <Text style={styles.statusLabel}>Wi-Fi</Text>
-              <View style={styles.statusBadge}>
-                <View style={[styles.statusDot, styles.statusDotActive]} />
-                <Text style={[styles.statusText, styles.statusTextActive]}>Aktif</Text>
-              </View>
-            </View>
+          {loading ? (
+            <ActivityIndicator size="large" color="#8b5cf6" style={{ marginVertical: 20 }} />
+          ) : buildingStatus ? (
+            <View style={styles.statusGrid}>
+              {/* Wi-Fi Durumu */}
+              {buildingStatus.wifi && (
+                <View style={styles.statusItem}>
+                  <View
+                    style={[
+                      styles.statusIconContainer,
+                      { backgroundColor: getStatusConfig(buildingStatus.wifi.status).bgColor },
+                    ]}
+                  >
+                    <Ionicons
+                      name="wifi"
+                      size={28}
+                      color={getStatusConfig(buildingStatus.wifi.status).color}
+                    />
+                  </View>
+                  <Text style={styles.statusLabel}>Wi-Fi</Text>
+                  <View style={styles.statusBadge}>
+                    <View
+                      style={[
+                        styles.statusDot,
+                        { backgroundColor: getStatusConfig(buildingStatus.wifi.status).dotColor },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: getStatusConfig(buildingStatus.wifi.status).color },
+                      ]}
+                    >
+                      {getStatusConfig(buildingStatus.wifi.status).text}
+                    </Text>
+                  </View>
+                </View>
+              )}
 
-            {/* Asansör Durumu */}
-            <View style={styles.statusItem}>
-              <View style={[styles.statusIconContainer, styles.statusInactive]}>
-                <Ionicons name="arrow-up-circle" size={28} color="#ef4444" />
-              </View>
-              <Text style={styles.statusLabel}>Asansör</Text>
-              <View style={styles.statusBadge}>
-                <View style={[styles.statusDot, styles.statusDotInactive]} />
-                <Text style={[styles.statusText, styles.statusTextInactive]}>Arızalı</Text>
-              </View>
-            </View>
+              {/* Asansör Durumu */}
+              {buildingStatus.elevator && (
+                <View style={styles.statusItem}>
+                  <View
+                    style={[
+                      styles.statusIconContainer,
+                      { backgroundColor: getStatusConfig(buildingStatus.elevator.status).bgColor },
+                    ]}
+                  >
+                    <Ionicons
+                      name="arrow-up-circle"
+                      size={28}
+                      color={getStatusConfig(buildingStatus.elevator.status).color}
+                    />
+                  </View>
+                  <Text style={styles.statusLabel}>Asansör</Text>
+                  <View style={styles.statusBadge}>
+                    <View
+                      style={[
+                        styles.statusDot,
+                        { backgroundColor: getStatusConfig(buildingStatus.elevator.status).dotColor },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: getStatusConfig(buildingStatus.elevator.status).color },
+                      ]}
+                    >
+                      {getStatusConfig(buildingStatus.elevator.status).text}
+                    </Text>
+                  </View>
+                </View>
+              )}
 
-            {/* Elektrik Durumu */}
-            <View style={styles.statusItem}>
-              <View style={[styles.statusIconContainer, styles.statusActive]}>
-                <Ionicons name="flash" size={28} color="#10b981" />
-              </View>
-              <Text style={styles.statusLabel}>Elektrik</Text>
-              <View style={styles.statusBadge}>
-                <View style={[styles.statusDot, styles.statusDotActive]} />
-                <Text style={[styles.statusText, styles.statusTextActive]}>Aktif</Text>
-              </View>
-            </View>
+              {/* Elektrik Durumu */}
+              {buildingStatus.electricity && (
+                <View style={styles.statusItem}>
+                  <View
+                    style={[
+                      styles.statusIconContainer,
+                      { backgroundColor: getStatusConfig(buildingStatus.electricity.status).bgColor },
+                    ]}
+                  >
+                    <Ionicons
+                      name="flash"
+                      size={28}
+                      color={getStatusConfig(buildingStatus.electricity.status).color}
+                    />
+                  </View>
+                  <Text style={styles.statusLabel}>Elektrik</Text>
+                  <View style={styles.statusBadge}>
+                    <View
+                      style={[
+                        styles.statusDot,
+                        {
+                          backgroundColor: getStatusConfig(buildingStatus.electricity.status)
+                            .dotColor,
+                        },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: getStatusConfig(buildingStatus.electricity.status).color },
+                      ]}
+                    >
+                      {getStatusConfig(buildingStatus.electricity.status).text}
+                    </Text>
+                  </View>
+                </View>
+              )}
 
-            {/* Su Durumu */}
-            <View style={styles.statusItem}>
-              <View style={[styles.statusIconContainer, styles.statusActive]}>
-                <Ionicons name="water" size={28} color="#10b981" />
-              </View>
-              <Text style={styles.statusLabel}>Su</Text>
-              <View style={styles.statusBadge}>
-                <View style={[styles.statusDot, styles.statusDotActive]} />
-                <Text style={[styles.statusText, styles.statusTextActive]}>Aktif</Text>
-              </View>
+              {/* Su Durumu */}
+              {buildingStatus.water && (
+                <View style={styles.statusItem}>
+                  <View
+                    style={[
+                      styles.statusIconContainer,
+                      { backgroundColor: getStatusConfig(buildingStatus.water.status).bgColor },
+                    ]}
+                  >
+                    <Ionicons
+                      name="water"
+                      size={28}
+                      color={getStatusConfig(buildingStatus.water.status).color}
+                    />
+                  </View>
+                  <Text style={styles.statusLabel}>Su</Text>
+                  <View style={styles.statusBadge}>
+                    <View
+                      style={[
+                        styles.statusDot,
+                        { backgroundColor: getStatusConfig(buildingStatus.water.status).dotColor },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: getStatusConfig(buildingStatus.water.status).color },
+                      ]}
+                    >
+                      {getStatusConfig(buildingStatus.water.status).text}
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
-          </View>
+          ) : (
+            <Text style={styles.errorText}>Bina durumu yüklenemedi</Text>
+          )}
         </View>
 
         {/* Menü Grid */}
